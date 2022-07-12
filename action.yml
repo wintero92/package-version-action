@@ -1,0 +1,43 @@
+name: "Get Package Version"
+description: "Figure out package version by a poetry version command."
+
+inputs:
+  ref:
+    description: "The ref to get version of."
+    required: true
+  python-version:
+    description: "The python version to use."
+    required: false
+    default: "3.9"
+  poetry-version:
+    description: "The poetry version to use."
+    required: false
+    default: "1.1.13"
+  package_manager:
+    description: "Tool to get version by."
+    required: true
+
+outputs:
+  version:
+    description: "Version of the package."
+    value: ${{steps.version.outputs.version}}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v3
+      with:
+        python-version: ${{inputs.python-version}}
+    - run: |
+        pip install --upgrade pip
+        pip install poetry==${{inputs.poetry-version}}
+      shell: bash
+    - name: Checkout ${{inputs.ref}}
+      uses: actions/checkout@v3
+      with:
+        ref: ${{inputs.ref}}
+    - id: version
+      if: inputs.package_manager == 'poetry'
+      run: |
+        echo "::set-output name=version::$(poetry version --short)"
+      shell: bash
